@@ -42,8 +42,6 @@ dependencies:
   workmanager: ^0.10.9
   intl: ^0.20.3
   url_launcher: ^6.3.2
-  xml: ^7.0.1
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -71,6 +69,15 @@ flutter:
     - assets/jma_class10_points.json
     - assets/jma_volcano_points.json
     - assets/jma_area_names.json
+
+  # 日本語フォントを同梱する。
+  # Flutter Web は日本語の予備フォントを後から取りに行くため、同梱しないと
+  # 初回表示で豆腐（□）になり、文字幅の計算もずれてラベルが欠ける。
+  # 出典: Noto Sans JP (SIL Open Font License 1.1) / tool/fetch_font.sh で取得
+  fonts:
+    - family: NotoSansJP
+      fonts:
+        - asset: assets/fonts/NotoSansJP-Regular.otf
 
   # To add assets to your application, add an assets section, like this:
   # assets:
