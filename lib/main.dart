@@ -15,8 +15,11 @@ Future<void> main() async {
   final state = AppState(repository: DisasterRepository(assets: assets));
 
   // 通知の準備は画面表示を待たせないよう、待たずに進める。
-  // Web ではどちらも何もしない実装になっている。
-  unawaited(NotificationService.instance.init());
+  // Web ではいずれも何もしない実装になっている。
+  //
+  // 通知の許可は起動時に一度だけ求める。設定画面まで来ないと通知が来ない、
+  // という状態を避けるため（Android 13 以降は許可が無いと一切鳴らない）。
+  unawaited(NotificationService.instance.requestPermission());
   unawaited(BackgroundWorker.register());
 
   runApp(DisasterMapApp(state: state));

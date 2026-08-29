@@ -105,6 +105,8 @@ tool/          アセット生成、フィクスチャ更新、定期監視ス�
 python tool/build_assets.py    # 区域143件・火山117件の代表点を生成
 bash tool/fetch_font.sh        # 日本語フォント（Noto Sans JP）を取得
 bash tool/refresh_fixtures.sh  # テスト用に各 API の応答を保存し直す
+python tool/build_icon.py      # アプリアイコンの元画像を作る
+dart run flutter_launcher_icons # 各解像度のアイコンを生成
 ```
 
 ---
