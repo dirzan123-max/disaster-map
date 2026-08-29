@@ -1,6 +1,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 公開データの取得に必須。debug 用マニフェストにしか無いと、
+         リリースビルドだけ通信できず「何も表示されない」状態になる。 -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Android 13 以降で通知を出すために必要。 -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- 15分ごとの定期チェック（workmanager）が再起動後も動くように。 -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+
     <application
-        android:label="disaster_map"
+        android:label="災害情報マップ"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
@@ -40,6 +49,11 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <!-- 詳細画面から出典（気象庁・USGS 等）のページを開くために必要。 -->
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="https"/>
         </intent>
     </queries>
 </manifest>

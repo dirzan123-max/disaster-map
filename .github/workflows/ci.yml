@@ -1,0 +1,22 @@
+name: CI
+
+# パーサのテストは保存済みの応答（test/fixtures）に対して走るため、
+# 外部 API に触らずに実行できる。API の仕様変更に気づきたいときは
+# tool/refresh_fixtures.sh でフィクスチャを取り直してコミットする。
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  analyze-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test

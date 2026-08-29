@@ -1,0 +1,48 @@
+name: Disaster watch
+
+# 定期的に災害情報を確認し、しきい値を超えたものを業務チャットへ通知する。
+#
+# アプリを入れていない相手（対策本部のチャンネル）へ届けるための経路で、
+# サーバーを持たずに運用できることを示す見本でもある。
+#
+# 使い方:
+#   1. Settings > Secrets and variables > Actions で WEBHOOK_URL を登録する
+#      （Slack / Teams / Discord の Incoming Webhook URL）
+#   2. 必要なら下の env を変える
+#
+# 注意: cron は指定どおりの時刻には起動しない（GitHub 側の混雑で遅れる）。
+# 分単位の即時性が要る用途には向かないため、そこは端末通知側で担保する。
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: '送信せず内容だけ表示する'
+        type: boolean
+        default: true
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # 通知済みIDを実行間で引き継ぐ。同じ地震で何度も鳴らさないため。
+      - uses: actions/cache@v4
+        with:
+          path: .watch_state.json
+          key: watch-state-${{ github.run_id }}
+          restore-keys: watch-state-
+
+      - run: python tool/watch.py
+        env:
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+          WEBHOOK_FORMAT: slack
+          REGION: japan
+          # 0=情報 1=軽微 2=注意 3=警戒 4=重大
+          MIN_SEVERITY: '3'
+          DRY_RUN: ${{ inputs.dry_run && '1' || '' }}
