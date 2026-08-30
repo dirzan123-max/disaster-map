@@ -3,6 +3,9 @@
 気象庁・USGS・NASA が公開している災害情報を集めて、**1つの地図と通知**で示すアプリです。
 Flutter の1コードベースから **Android・Windows・Web** の3つを出しています。
 
+**▶ ブラウザで試す: https://dirzan123-max.github.io/disaster-map/**
+（インストール不要。ただし通知は Android / Windows 版のみ）
+
 > **状況把握を助ける補助的なツールです。**
 > 避難などの判断は、必ず自治体や気象庁の公式発表を優先してください。
 > 緊急地震速報（揺れる前に鳴るもの）は扱えません（[理由](#リアルタイム監視)）。
@@ -69,9 +72,12 @@ flutter run -d windows           # パソコン
 
 ```bash
 flutter build apk --release              # Android
-flutter build web --release              # Web（GitHub Pages へ自動デプロイ）
+flutter build web --release              # Web
 flutter build windows --release          # Windows
 ```
+
+Web 版は `main` に push すると GitHub Actions が自動でビルドして
+GitHub Pages へ配信します（`.github/workflows/pages.yml`）。
 
 Windows のビルドには Visual Studio の C++ ツールが必要です。
 
