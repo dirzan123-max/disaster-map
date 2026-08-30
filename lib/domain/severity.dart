@@ -31,13 +31,34 @@ enum Severity {
         Severity.extreme => '重大',
       };
 
-  String get labelEn => switch (this) {
-        Severity.info => 'Info',
-        Severity.minor => 'Minor',
-        Severity.moderate => 'Moderate',
-        Severity.severe => 'Severe',
-        Severity.extreme => 'Extreme',
-      };
+  /// 絞り込みで選べる下限。「情報以上」は全件表示と同じ意味になり
+  /// 選択肢として働かないため、ここには入れない。
+  static const List<Severity> filterOptions = [
+    Severity.minor,
+    Severity.moderate,
+    Severity.severe,
+    Severity.extreme,
+  ];
+
+  /// 通知で選べる下限。画面より一段狭くしてある。
+  ///
+  /// 「軽微以上」で通知すると、震度1・2 の地震や小さな噴火まで鳴り続けて
+  /// 通知として役に立たなくなるため、注意以上だけにしている。
+  static const List<Severity> notifyOptions = [
+    Severity.moderate,
+    Severity.severe,
+    Severity.extreme,
+  ];
+
+  /// 通知の下限として使える値に丸める。
+  Severity get forNotification =>
+      level < Severity.moderate.level ? Severity.moderate : this;
+
+  /// 絞り込みに使う深刻度。
+  ///
+  /// 震度やマグニチュードが分からず [info] になった情報を切り捨てないよう、
+  /// 絞り込みのうえでは「軽微」と同じ扱いにする。
+  Severity get forFilter => this == Severity.info ? Severity.minor : this;
 
   /// 気象庁の震度階級コード（10 = 震度1 … 70 = 震度7）を写像する。
   static Severity fromJmaScale(int scale) {

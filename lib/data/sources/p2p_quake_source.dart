@@ -13,7 +13,10 @@ import 'disaster_source.dart';
 /// AppHttp と DisasterRepository 側で守っている。
 /// https://www.p2pquake.net/develop/json_api_v2/
 class P2pQuakeSource extends ParsingSource {
-  P2pQuakeSource({AppHttp? http, this.limit = 50}) : _http = http ?? AppHttp();
+  /// [limit] は取得する件数。API が受け付ける上限が 100 で、
+  /// 有感地震のペースだとおおよそ 1 週間分にあたる。
+  /// 期間フィルタで遡れる長さは、ここが上限になる。
+  P2pQuakeSource({AppHttp? http, this.limit = 100}) : _http = http ?? AppHttp();
 
   final AppHttp _http;
   final int limit;
@@ -29,6 +32,12 @@ class P2pQuakeSource extends ParsingSource {
   @override
   Future<List<DisasterEvent>> fetch() async =>
       parse(await _http.getText(endpoint));
+
+  /// WebSocket から届く1件ぶんの JSON を読む。
+  ///
+  /// 配信される中身はまとめて取得したときと同じ形なので、
+  /// 配列に包んで同じ変換にかける。地震・津波以外のコードは無視される。
+  List<DisasterEvent> parseMessage(String message) => parse('[$message]');
 
   @override
   List<DisasterEvent> parse(String body) {

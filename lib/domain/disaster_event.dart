@@ -20,7 +20,9 @@ class DisasterEvent {
     this.magnitude,
     this.depthKm,
     this.areaName,
+    this.countryCode,
     this.sourceUrl,
+    this.isOngoing = false,
     this.details = const <String>[],
   });
 
@@ -50,6 +52,10 @@ class DisasterEvent {
   /// 地域名（震源地名・区域名・国名など）。
   final String? areaName;
 
+  /// 座標から判定した国・地域のコード（ISO 3166-1 alpha-2）。
+  /// 外洋など、どの国にも寄せられない場合は null。
+  final String? countryCode;
+
   /// 出典の表示名（例: 「気象庁」「USGS」）。画面に必ず表示する。
   final String sourceName;
 
@@ -59,7 +65,39 @@ class DisasterEvent {
   /// 詳細画面に並べる追加情報（例: 各地の震度、発表中の警報名）。
   final List<String> details;
 
+  /// 「今も続いている状態」を表す情報か。
+  ///
+  /// 気象警報と噴火警報がこれにあたる。配信元が「今出ているもの」だけを
+  /// 配信していて、[occurredAt] は発生時刻ではなく
+  /// 「最後に発表・更新された時刻」を指す。
+  /// 一覧で「継続中」「◯◯ 更新」と書き分けるために使う。
+  ///
+  /// 絞り込みからは外さない。外すと期間を変えても件数が変わらず、
+  /// 絞り込みが壊れているように見えるため。
+  final bool isOngoing;
+
   bool get hasLocation => latitude != null && longitude != null;
+
+  /// 国の判定結果だけを差し替える。判定は取得後にまとめて行うため、
+  /// 各データソースは国を知らないまま [DisasterEvent] を作れる。
+  DisasterEvent withCountry(String? code) => DisasterEvent(
+        id: id,
+        kind: kind,
+        severity: severity,
+        title: title,
+        occurredAt: occurredAt,
+        sourceName: sourceName,
+        latitude: latitude,
+        longitude: longitude,
+        subtitle: subtitle,
+        magnitude: magnitude,
+        depthKm: depthKm,
+        areaName: areaName,
+        countryCode: code,
+        sourceUrl: sourceUrl,
+        isOngoing: isOngoing,
+        details: details,
+      );
 
   @override
   bool operator ==(Object other) =>

@@ -58,9 +58,14 @@ const Map<String, WarningKind> jmaWarningCodes = {
 
 /// 日本の気象警報・注意報（気象庁 bosai）。
 ///
-/// 全国分が 1 ファイルにまとまった map.json を使う。
-/// 都道府県別ファイルを 47 個叩く必要がなく、気象庁への負荷も小さい。
-/// 発表区域には座標が無いため、同梱の代表点表（class10）で地図に載せる。
+/// 全国分が 1 ファイルにまとまった map.json を使う。1回の取得で済むが、
+/// **いつ発表されたかが入っていない**（`reportDatetime` は府県予報区の
+/// 最終更新時刻）ので期間で絞り込めず、実際にこの配信が3か月止まって
+/// いたこともあった。そのため取得には使っておらず、
+/// 今は [JmaWarningXmlSource] が防災情報XMLから取っている。
+///
+/// このクラスを残しているのは、警報コードの表（[jmaWarningCodes]・[kindOf]）を
+/// XML 側と共有しているのと、bosai が復活したときに戻せるようにするため。
 class JmaWarningSource extends ParsingSource {
   JmaWarningSource({required this.areaPoints, AppHttp? http})
       : _http = http ?? AppHttp();
@@ -137,6 +142,8 @@ class JmaWarningSource extends ParsingSource {
     final areaName = point?.name ?? '区域$code';
 
     return DisasterEvent(
+      // 発表中の気象警報は「今出ている状態」で、時刻は最後の発表時刻でしかない。
+      isOngoing: true,
       // 発表内容が変われば ID も変わり、新しい通知として扱われる。
       id: 'jma-warn-$code-${active.map((w) => w.name).join(",")}',
       kind: EventKind.weatherWarning,

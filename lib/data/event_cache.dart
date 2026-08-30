@@ -5,7 +5,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../domain/disaster_event.dart';
 import '../domain/event_kind.dart';
 import '../domain/severity.dart';
-import '../core/region.dart';
 
 /// 直近の取得結果を端末に保存しておく。
 ///
@@ -14,20 +13,22 @@ import '../core/region.dart';
 class EventCache {
   const EventCache();
 
-  static String _key(Region region) => 'cached_events_${region.name}';
+  /// 地図を1つにまとめたので、保存先も1つ。
+  /// 以前の地域別のキー（cached_events_japan / _world）は読まずに捨てる。
+  static const String _key = 'cached_events';
 
-  Future<void> save(Region region, List<DisasterEvent> events) async {
+  Future<void> save(List<DisasterEvent> events) async {
     final preferences = await SharedPreferences.getInstance();
     final payload = jsonEncode({
       'savedAt': DateTime.now().toUtc().toIso8601String(),
       'events': events.map(_toJson).toList(),
     });
-    await preferences.setString(_key(region), payload);
+    await preferences.setString(_key, payload);
   }
 
-  Future<CachedEvents?> load(Region region) async {
+  Future<CachedEvents?> load() async {
     final preferences = await SharedPreferences.getInstance();
-    final payload = preferences.getString(_key(region));
+    final payload = preferences.getString(_key);
     if (payload == null) return null;
 
     try {
@@ -60,8 +61,10 @@ class EventCache {
         'magnitude': event.magnitude,
         'depthKm': event.depthKm,
         'areaName': event.areaName,
+        'countryCode': event.countryCode,
         'sourceName': event.sourceName,
         'sourceUrl': event.sourceUrl,
+        'isOngoing': event.isOngoing,
         'details': event.details,
       };
 
@@ -85,8 +88,10 @@ class EventCache {
       magnitude: (json['magnitude'] as num?)?.toDouble(),
       depthKm: (json['depthKm'] as num?)?.toDouble(),
       areaName: json['areaName'] as String?,
+      countryCode: json['countryCode'] as String?,
       sourceName: json['sourceName'] as String? ?? '',
       sourceUrl: json['sourceUrl'] as String?,
+      isOngoing: json['isOngoing'] as bool? ?? false,
       details: (json['details'] as List? ?? const [])
           .map((detail) => detail.toString())
           .toList(),

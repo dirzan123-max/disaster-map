@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter/services.dart' show rootBundle;
 
+import 'country_index.dart';
+
 /// 区域コード・火山コードに対応する代表点。
 ///
 /// 気象庁の警報は「区域」単位、噴火警報は「火山」単位で発表され、
@@ -21,10 +23,6 @@ class AreaPoint {
   final String enName;
   final double latitude;
   final double longitude;
-
-  /// 英語名が空のレコードがあるため、無ければ日本語名で代替する。
-  String label({required bool english}) =>
-      english && enName.isNotEmpty ? enName : name;
 }
 
 /// 座標表（コード -> 代表点）。
@@ -63,6 +61,7 @@ class AreaAssets {
     required this.class10Points,
     required this.volcanoPoints,
     required this.areaNames,
+    this.countries = CountryIndex.empty,
   });
 
   /// 気象警報の一次細分区域（143件）。
@@ -73,6 +72,10 @@ class AreaAssets {
 
   /// 区域コード -> 名称（市町村を含む全階層）。
   final Map<String, String> areaNames;
+
+  /// 国と地域の一覧・国境（239件）。国での絞り込みと、
+  /// 世界版の英語テキストの和訳に使う。
+  final CountryIndex countries;
 
   static const AreaAssets empty = AreaAssets(
     class10Points: {},
@@ -85,11 +88,13 @@ class AreaAssets {
       rootBundle.loadString('assets/jma_class10_points.json'),
       rootBundle.loadString('assets/jma_volcano_points.json'),
       rootBundle.loadString('assets/jma_area_names.json'),
+      rootBundle.loadString('assets/countries.json'),
     ]);
     return AreaAssets(
       class10Points: parseAreaPoints(results[0]),
       volcanoPoints: parseAreaPoints(results[1]),
       areaNames: parseAreaNames(results[2]),
+      countries: CountryIndex.parse(results[3]),
     );
   }
 }

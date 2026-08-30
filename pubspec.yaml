@@ -42,6 +42,9 @@ dependencies:
   workmanager: ^0.10.9
   intl: ^0.20.3
   url_launcher: ^6.3.2
+  xml: ^7.0.1
+  web_socket_channel: ^3.0.3
+  flutter_foreground_task: ^11.0.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -70,6 +73,8 @@ flutter:
     - assets/jma_class10_points.json
     - assets/jma_volcano_points.json
     - assets/jma_area_names.json
+    # 国と地域の一覧・国境。tool/build_countries.py が生成する。
+    - assets/countries.json
 
   # 日本語フォントを同梱する。
   # Flutter Web は日本語の予備フォントを後から取りに行くため、同梱しないと

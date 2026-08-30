@@ -4,9 +4,7 @@ import 'package:workmanager/workmanager.dart';
 import '../../data/area_points.dart';
 import '../../data/disaster_repository.dart';
 import '../settings/notification_settings.dart';
-import 'notification_service.dart';
-import 'seen_store.dart';
-import 'webhook_sender.dart';
+import 'event_notifier.dart';
 
 /// バックグラウンドでの定期チェック（Android のみ）。
 ///
@@ -44,29 +42,13 @@ class BackgroundWorker {
   /// 画面の状態には触らず、保存された設定だけを見る。
   static Future<bool> runCheck() async {
     final settings = await NotificationSettings.load();
-    if (!settings.enabled) return true;
+    if (!settings.enabled || settings.rules.notifiesNothing) return true;
 
     final assets = await AreaAssets.load();
     final repository = DisasterRepository(assets: assets);
-    final snapshot = await repository.fetch(settings.region);
+    final snapshot = await repository.fetch();
 
-    final candidates = snapshot.events.where(settings.matches).toList();
-    if (candidates.isEmpty) return true;
-
-    // 同じ内容で繰り返し鳴らさないよう、未通知のものだけに絞る。
-    const seenStore = SeenStore();
-    final unseenIds =
-        (await seenStore.filterUnseen(candidates.map((e) => e.id).toList()))
-            .toSet();
-    final fresh = candidates.where((event) => unseenIds.contains(event.id));
-
-    const webhook = WebhookSender();
-    for (final event in fresh) {
-      await NotificationService.instance.show(event);
-      if (settings.hasWebhook) {
-        await webhook.send(event, settings);
-      }
-    }
+    await EventNotifier.notify(snapshot.events, settings);
     return true;
   }
 }

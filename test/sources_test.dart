@@ -1,11 +1,14 @@
 import 'dart:io';
 
 import 'package:disaster_map/core/iso6709.dart';
+import 'package:disaster_map/core/world_text_ja.dart';
 import 'package:disaster_map/data/area_points.dart';
+import 'package:disaster_map/data/country_index.dart';
 import 'package:disaster_map/data/sources/eonet_source.dart';
 import 'package:disaster_map/data/sources/jma_quake_source.dart';
 import 'package:disaster_map/data/sources/jma_volcano_source.dart';
 import 'package:disaster_map/data/sources/jma_warning_source.dart';
+import 'package:disaster_map/data/sources/jma_warning_xml_source.dart';
 import 'package:disaster_map/data/sources/p2p_quake_source.dart';
 import 'package:disaster_map/data/sources/usgs_source.dart';
 import 'package:disaster_map/domain/event_kind.dart';
@@ -17,6 +20,12 @@ import 'package:flutter_test/flutter_test.dart';
 /// 取得先が仕様を変えたときに気づけるよう、フィクスチャは
 /// tool/refresh_fixtures.sh で取り直してコミットする。
 String fixture(String name) => File('test/fixtures/$name').readAsStringSync();
+
+/// 世界版の和訳。同梱の国データから国名の対応表を作る。
+final WorldTextJa worldText = WorldTextJa(
+  CountryIndex.parse(File('assets/countries.json').readAsStringSync())
+      .japaneseNameByEnglish,
+);
 
 void main() {
   group('ISO 6709', () {
@@ -146,6 +155,50 @@ void main() {
     });
   });
 
+  group('気象庁 気象警報（防災情報XML）', () {
+    final source = JmaWarningXmlSource(
+      areaPoints: parseAreaPoints(
+        File('assets/jma_class10_points.json').readAsStringSync(),
+      ),
+    );
+
+    test('フィードから発表XMLの場所を、府県ごとに最新1件だけ取り出す', () {
+      final urls = source.parseFeed(fixture('jma_warning_feed.xml'));
+      expect(urls, isNotEmpty);
+      expect(urls.every((url) => url.contains('VPWW')), isTrue);
+      // 同じ府県が何度も更新されるため、重複していないこと。
+      final offices = urls
+          .map((url) => url.split('/').last.split('_')[3])
+          .toList();
+      expect(offices.toSet().length, offices.length);
+    });
+
+    test('発表XMLから、発表時刻・警報の種類・区域を取り出せる', () {
+      final events = source.parseReport(fixture('jma_warning_report.xml'));
+      expect(events, isNotEmpty);
+      expect(events.every((e) => e.kind == EventKind.weatherWarning), isTrue);
+
+      // bosai の JSON と違い、いつ発表されたかが入っている。
+      // これが無いと期間で絞り込めない。
+      final reported = events.first.occurredAt;
+      expect(reported.isUtc, isTrue);
+      expect(reported.year, greaterThan(2000));
+
+      // 区域コードは bosai と同じなので、同梱の代表点表で座標を引ける。
+      expect(events.any((e) => e.hasLocation), isTrue);
+      expect(events.every((e) => !e.title.startsWith('区域')), isTrue);
+    });
+
+    test('警報が出ていない区域は落とす', () {
+      final events = source.parseReport(fixture('jma_warning_report.xml'));
+      expect(events.every((e) => e.details.isNotEmpty), isTrue);
+    });
+
+    test('壊れた XML でも落ちない', () {
+      expect(source.parseReport('<not-xml'), isEmpty);
+    });
+  });
+
   group('USGS', () {
     final events = UsgsSource().parse(fixture('usgs_all_day.geojson'));
 
@@ -168,6 +221,35 @@ void main() {
     test('発生時刻を UTC で持つ', () {
       expect(events.every((e) => e.occurredAt.isUtc), isTrue);
     });
+
+    test('検索API（24時間より前を遡る窓口）も同じ形で読める', () {
+      final history = UsgsSource(text: worldText)
+          .parse(fixture('usgs_fdsn_query.geojson'));
+      expect(history, isNotEmpty);
+      expect(history.every((event) => event.hasLocation), isTrue);
+      expect(history.every((event) => event.occurredAt.isUtc), isTrue);
+      expect(history.every((event) => event.id.startsWith('usgs-')), isTrue);
+      // まとめフィードと ID 体系が同じなので、重なった分をまとめられる。
+      expect(history.every((event) => (event.magnitude ?? 0) >= 5), isTrue);
+    });
+
+    test('検索APIの問い合わせ先に期間とマグニチュードが入る', () {
+      final source = UsgsSource(historyMinimumMagnitude: 4.5);
+      final url = source.historyEndpoint(DateTime.utc(2026, 7, 30)).toString();
+      expect(url, contains('fdsnws/event/1/query'));
+      expect(url, contains('starttime=2026-07-30T00:00:00.000Z'));
+      expect(url, contains('minmagnitude=4.5'));
+    });
+
+    test('見出しと補足が日本語になっている', () {
+      final japanese = UsgsSource(text: worldText)
+          .parse(fixture('usgs_all_day.geojson'));
+      expect(japanese.first.title, startsWith('M'));
+      expect(japanese.any((e) => e.title.contains('の')), isTrue);
+      expect(japanese.every((e) => !e.title.contains(' of ')), isTrue);
+      expect(japanese.first.subtitle, contains('深さ'));
+      expect(japanese.first.details, contains(startsWith('原文: ')));
+    });
   });
 
   group('NASA EONET', () {
@@ -177,6 +259,30 @@ void main() {
       expect(events, isNotEmpty);
       expect(events.every((e) => e.hasLocation), isTrue);
       expect(events.map((e) => e.kind).toSet(), isNotEmpty);
+    });
+
+    test('見出しと詳細が日本語になっている', () {
+      final japanese =
+          EonetSource(text: worldText).parse(fixture('eonet_events.json'));
+      expect(japanese.any((e) => e.title.startsWith('山火事 ')), isTrue);
+      expect(japanese.every((e) => !e.title.startsWith('Wildfire ')), isTrue);
+      expect(japanese.first.details, contains(startsWith('種類: ')));
+      // 「10000.0エーカー」ではなく「10000エーカー」と出す。
+      expect(japanese.first.details.join(), isNot(contains('.0エーカー')));
+    });
+
+    test('時刻は発生・探知した時刻を使う（最新の観測時刻ではない）', () {
+      // 「いつ起きたか」で絞り込めるようにするため。最新の観測時刻にすると、
+      // 続いている限り常に「今」になってしまい、期間の絞り込みが効かない。
+      final japanese =
+          EonetSource(text: worldText).parse(fixture('eonet_events.json'));
+      expect(japanese, isNotEmpty);
+      // 継続中でも、時刻は過去のまま（＝期間で絞れる）。
+      expect(
+        japanese.every((event) => event.occurredAt.isBefore(DateTime.now().toUtc())),
+        isTrue,
+      );
+      expect(japanese.every((event) => !event.isOngoing), isTrue);
     });
 
     test('カテゴリを災害種別へ写像する', () {

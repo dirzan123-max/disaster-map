@@ -20,9 +20,15 @@ class EventDetailSheet extends StatelessWidget {
     final color = EventStyle.colorOf(event.severity);
     final theme = Theme.of(context);
 
+    // 下から引き出す一覧の上に重なるため、同じ地の色だと境目が見えない。
+    // 一段濃い面と、上辺の線・影で「別の物が乗っている」ことを示す。
     return Material(
-      elevation: 8,
-      color: theme.colorScheme.surface,
+      elevation: 16,
+      color: theme.colorScheme.surfaceContainerHighest,
+      shadowColor: theme.colorScheme.shadow,
+      shape: Border(
+        top: BorderSide(color: theme.colorScheme.outline, width: 2),
+      ),
       child: SafeArea(
         top: false,
         child: Padding(
@@ -62,8 +68,13 @@ class EventDetailSheet extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                '発表・発生: ${formatLocalFull(event.occurredAt)}'
-                '（${formatElapsed(event.occurredAt)}）',
+                event.isOngoing
+                    // 配信元が「今出ている」として配っているもの。
+                    // 時刻は発表・更新された時刻であって、発生時刻ではない。
+                    ? '発表中・最終更新 ${formatLocalFull(event.occurredAt)}'
+                        '（${formatElapsed(event.occurredAt)}）'
+                    : '発表・発生: ${formatLocalFull(event.occurredAt)}'
+                        '（${formatElapsed(event.occurredAt)}）',
                 style: theme.textTheme.bodySmall,
               ),
               if (event.details.isNotEmpty) ...[

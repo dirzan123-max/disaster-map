@@ -72,6 +72,8 @@ class JmaVolcanoSource extends ParsingSource {
         .reduce((a, b) => a.level >= b.level ? a : b);
 
     return DisasterEvent(
+      // 噴火警報は解除されるまで続く「今の警戒レベル」を表す。
+      isOngoing: true,
       id: 'jma-vol-$volcanoCode-${reportedAt.millisecondsSinceEpoch}',
       kind: EventKind.volcano,
       severity: severity,

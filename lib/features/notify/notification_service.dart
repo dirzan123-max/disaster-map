@@ -36,6 +36,16 @@ class NotificationService {
     importance: Importance.defaultImportance,
   );
 
+  /// Windows のトースト通知に使う識別子。
+  ///
+  /// GUID はアプリごとに固有であればよく、変えると通知の履歴が別物になる。
+  static const WindowsInitializationSettings _windowsSettings =
+      WindowsInitializationSettings(
+    appName: '災害情報マップ',
+    appUserModelId: 'com.yjfuj.disaster_map',
+    guid: '6f3d9c21-5f0a-4b6e-9a3f-1c8d2b4e7a50',
+  );
+
   Future<void> init() async {
     // Web にはローカル通知の仕組みが無いため何もしない。
     // Web 版は画面内のプレビューと Webhook 連携で代替する。
@@ -43,14 +53,30 @@ class NotificationService {
 
     const settings = InitializationSettings(
       android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+      windows: _windowsSettings,
     );
     await _plugin.initialize(settings: settings);
 
+    // チャンネルは Android の仕組み。他の環境では何も返らない。
     final android = _plugin.resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin>();
     await android?.createNotificationChannel(_urgentChannel);
     await android?.createNotificationChannel(_normalChannel);
     _initialized = true;
+  }
+
+  /// 端末側で通知が許可されているか。
+  ///
+  /// アプリ内で「通知を受け取る」を ON にしていても、端末の許可が無ければ
+  /// 何も鳴らない。設定画面でその状態に気づけるようにするために使う。
+  Future<bool> isPermitted() async {
+    if (kIsWeb) return false;
+    await init();
+    final android = _plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+    // Android 以外は許可の仕組みが無く、そのまま出せる。
+    if (android == null) return true;
+    return await android.areNotificationsEnabled() ?? false;
   }
 
   /// Android 13 以降は通知の許可をユーザーに求める必要がある。
@@ -59,7 +85,8 @@ class NotificationService {
     await init();
     final android = _plugin.resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin>();
-    return await android?.requestNotificationsPermission() ?? false;
+    if (android == null) return true;
+    return await android.requestNotificationsPermission() ?? false;
   }
 
   Future<void> show(DisasterEvent event) async {
@@ -105,6 +132,7 @@ class NotificationService {
           _normalChannel.name,
           channelDescription: _normalChannel.description,
         ),
+        windows: const WindowsNotificationDetails(),
       ),
     );
   }

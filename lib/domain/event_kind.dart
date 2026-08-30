@@ -21,16 +21,4 @@ enum EventKind {
         EventKind.storm => '暴風・台風',
         EventKind.other => 'その他',
       };
-
-  /// 英語の表示名（世界版で使用）。
-  String get labelEn => switch (this) {
-        EventKind.earthquake => 'Earthquake',
-        EventKind.tsunami => 'Tsunami',
-        EventKind.weatherWarning => 'Weather Alert',
-        EventKind.volcano => 'Volcano',
-        EventKind.wildfire => 'Wildfire',
-        EventKind.flood => 'Flood',
-        EventKind.storm => 'Storm',
-        EventKind.other => 'Other',
-      };
 }
