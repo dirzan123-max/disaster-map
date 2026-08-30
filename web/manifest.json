@@ -1,12 +1,12 @@
 {
-    "name": "disaster_map",
-    "short_name": "disaster_map",
+    "name": "災害情報マップ",
+    "short_name": "災害情報マップ",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#004D40",
     "theme_color": "#00695C",
-    "description": "災害情報を地図とお知らせで可視化する BCP 向けアプリ",
-    "orientation": "portrait-primary",
+    "description": "気象庁・USGS・NASA の災害情報を1つの地図で示します",
+    "orientation": "any",
     "prefer_related_applications": false,
     "icons": [
         {
