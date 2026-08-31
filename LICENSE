@@ -1,0 +1,64 @@
+災害情報マップ — 利用条件
+Copyright (c) 2026 yujiori
+
+このソフトウェアと付属文書（以下「本ソフトウェア」）の複製を取得したすべての人に対し、
+以下の条件のもとで、本ソフトウェアを無償で扱うことを許可します。
+扱うとは、使用・複製・改変・結合・掲載・頒布・サブライセンス・販売を含みます。
+
+1. 上記の著作権表示と、この利用条件の全文を、本ソフトウェアの複製または
+   重要な部分すべてに含めること。
+
+2. 本ソフトウェア、またはそれを実質的に元にした著作物を、アプリケーション
+   ストアへ公開しないこと。アプリケーションストアとは、Google Play、
+   Apple App Store、Microsoft Store をはじめとする、一般利用者向けに
+   アプリケーションを配布する場を指します。
+   ソースコードの公開、改変版の頒布、自分および所属組織で使うための
+   ビルドの配布は、この制限の対象外です。
+
+3. アプリケーションストアへの公開を希望する場合は、著作権者の書面による
+   事前の許可を得ること。
+
+本ソフトウェアは「現状のまま」提供され、明示・黙示を問わず、商品性、
+特定目的への適合性、権利非侵害を含むいかなる保証もありません。
+著作者または著作権者は、契約・不法行為その他を問わず、本ソフトウェアに関して
+生じたいかなる請求・損害・その他の責任についても責任を負いません。
+
+本ソフトウェアは災害情報を扱いますが、状況把握を助ける補助的なものです。
+避難などの判断は、必ず自治体や気象庁の公式発表を優先してください。
+
+--------------------------------------------------------------------------
+
+Disaster Map — Terms of Use
+Copyright (c) 2026 yujiori
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software, including without limitation the rights to use, copy, modify,
+merge, publish, distribute, sublicense, and/or sell copies of the Software,
+subject to the following conditions:
+
+1. The above copyright notice and this permission notice shall be included in
+   all copies or substantial portions of the Software.
+
+2. The Software, or any work substantially derived from it, shall not be
+   published to an application store. "Application store" means any venue that
+   distributes applications to the general public, including but not limited to
+   Google Play, the Apple App Store, and the Microsoft Store. Publishing source
+   code, distributing modified versions, and distributing builds for use by
+   yourself or your organization are not restricted by this clause.
+
+3. Publication to an application store requires prior written permission from
+   the copyright holder.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+This Software presents disaster information, but it is only an aid to
+situational awareness. For decisions such as evacuation, always follow the
+official announcements of your local authorities and the Japan Meteorological
+Agency.

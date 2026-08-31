@@ -28,6 +28,7 @@ Flutter の1コードベースから **Android・Windows・Web** の3つを出�
 - [同梱データの作り直し](#同梱データの作り直し)
 - [踏んだ地雷](#踏んだ地雷)
 - [引き継ぐ人へ](#引き継ぐ人へ)
+- [利用条件](#利用条件)
 
 ---
 
@@ -160,14 +161,13 @@ CI でも同じものが走ります。落ちたまま push すると GitHub 上
 
 ### Android
 
-Google Play での配布を予定しています。
-公開時は APK ではなく AAB を作り、**専用のキーストアで署名**します
-（今は debug キーのままです。[引き継ぐ人へ](#引き継ぐ人へ) 参照）。
-
 ```bash
-flutter build appbundle --release
-#  → build/app/outputs/bundle/release/app-release.aab
+flutter build apk --release
+#  → build/app/outputs/flutter-apk/app-release.apk
 ```
+
+release ビルドは debug キーで署名しています
+（[引き継ぐ人へ](#引き継ぐ人へ) 参照）。
 
 ### Windows
 
@@ -491,8 +491,8 @@ signingConfig = signingConfigs.getByName("debug")
 debug キーは**開発機ごとに違う**ため、別の人がビルドした APK は署名が変わります。
 すでに入っている端末には上書き更新できず、一度アンインストールが必要です。
 
-Google Play へ出すときは専用のキーストアに差し替えてください。
-**キーストアを失うと同じアプリとして更新できなくなります。**
+配布する段になったら専用のキーストアに差し替えます。
+**キーストアを失うと、同じアプリとして更新できなくなります。**
 
 ### 3. 定期監視の Webhook はリポジトリの secret
 
@@ -515,6 +515,22 @@ flutter analyze && flutter test    # push 前に。CI でも同じものが走�
 実装を変えたときは [`docs/architecture.md`](docs/architecture.md) の
 該当箇所も同じ作業の中で直してください。
 「なぜそうしたか」が残っていないと、同じ地雷を踏み直すことになります。
+
+---
+
+## 利用条件
+
+読む・改変する・自分でビルドする・改変版を人に渡す — いずれも自由です。
+**アプリケーションストア（Google Play・App Store・Microsoft Store 等）への公開だけ**
+著作権者の許可が要ります。全文は [LICENSE](LICENSE) にあります。
+
+| | |
+|---|---|
+| ✓ | ソースを読む・改変する・自分でビルドする |
+| ✓ | 改変版を人に渡す・fork する・社内で使う |
+| ✗ | アプリストアへ公開する（要・事前許可） |
+
+厳密には「オープンソース」ではなく source-available と呼ばれる形です。
 
 ---
 
