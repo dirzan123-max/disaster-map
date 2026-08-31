@@ -15,7 +15,7 @@ Flutter の1コードベースから **Android・Windows・Web** の3つを出�
 ## 目次
 
 - [何ができるか](#何ができるか)
-- [動かす](#動かす)
+- [動かす](#動かす)（clone・Git の設定を含む）
 - [配る](#配る)
 - [画面の作り](#画面の作り)
 - [設計の要点](#設計の要点)
@@ -61,6 +61,57 @@ Flutter の1コードベースから **Android・Windows・Web** の3つを出�
 ---
 
 ## 動かす
+
+### 手元に持ってくる
+
+Git が入っていなければ先に入れます。
+
+```powershell
+winget install --id Git.Git          # Windows
+```
+
+```bash
+git clone https://github.com/dirzan123-max/disaster-map.git
+cd disaster-map
+```
+
+初めて Git を使うときは、コミットに残る名前とメールを設定します。
+
+```bash
+git config --global user.name "あなたの名前"
+git config --global user.email "あなたのメールアドレス"
+```
+
+GitHub へ push するには認証が要ります。[GitHub CLI](https://cli.github.com/) が楽です。
+
+```powershell
+winget install --id GitHub.cli
+```
+
+```bash
+gh auth login       # 対話で進む。Git operations は HTTPS を選ぶ
+```
+
+> `.github/workflows/` を変更して push する場合は、`workflow` 権限も要ります。
+> 足りないと `refusing to allow an OAuth App to create or update workflow` で
+> 弾かれるので、そのときは次を実行します。
+>
+> ```bash
+> gh auth refresh -h github.com -s workflow
+> ```
+
+### 変更を戻す・送る
+
+```bash
+git status                    # 何を変えたか
+git diff                      # 中身の差分
+git add -A && git commit -m "何をしたか"
+git push                      # → CI と Web の公開が自動で走る
+
+git switch -c 作業ブランチ名    # 大きめの変更は枝を切ってから
+git restore <ファイル>         # 変更をなかったことにする
+git log --oneline -10         # これまでの履歴
+```
 
 ### はじめに一度だけ
 
@@ -109,38 +160,14 @@ CI でも同じものが走ります。落ちたまま push すると GitHub 上
 
 ### Android
 
-```bash
-flutter build apk --release --build-number 2019
-#  → build/app/outputs/flutter-apk/app-release.apk
-```
-
-**`--build-number` は毎回1つ上げます。** Android は versionCode が
-今入っているものより小さいと上書きを拒否し、`INSTALL_FAILED_VERSION_DOWNGRADE`
-になります。今どれが入っているかは次で分かります。
+Google Play での配布を予定しています。
+公開時は APK ではなく AAB を作り、**専用のキーストアで署名**します
+（今は debug キーのままです。[引き継ぐ人へ](#引き継ぐ人へ) 参照）。
 
 ```bash
-adb -s <端末ID> shell "dumpsys package com.yjfuj.disaster_map | grep -m1 versionCode"
+flutter build appbundle --release
+#  → build/app/outputs/bundle/release/app-release.aab
 ```
-
-端末に入れる:
-
-```bash
-adb devices                                   # 端末IDを確認
-adb -s <端末ID> install -r <APKのパス>         # -r は上書き更新
-```
-
-> `-s <端末ID>` は必ず付けてください。省くと**接続順で選ばれた端末**に入り、
-> エミュレータのつもりで実機を上書きすることがあります。
-
-ケーブルを抜いて Wi-Fi で入れたいときは、一度だけ USB でつないで切り替えます。
-
-```bash
-adb -s <端末ID> tcpip 5555
-adb -s <端末ID> shell "ip -f inet addr show wlan0 | grep -oE 'inet [0-9.]+'"
-adb connect <出てきたIP>:5555                 # 以降はケーブル不要
-```
-
-release ビルドは debug キーで署名しています（[引き継ぐ人へ](#引き継ぐ人へ) 参照）。
 
 ### Windows
 
