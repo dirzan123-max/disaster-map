@@ -16,6 +16,7 @@ Flutter の1コードベースから **Android・Windows・Web** の3つを出�
 
 - [何ができるか](#何ができるか)
 - [動かす](#動かす)
+- [配る](#配る)
 - [画面の作り](#画面の作り)
 - [設計の要点](#設計の要点)
 - [データソース](#データソース)
@@ -61,37 +62,124 @@ Flutter の1コードベースから **Android・Windows・Web** の3つを出�
 
 ## 動かす
 
-```bash
-flutter pub get
+### はじめに一度だけ
 
-flutter run                      # 接続中の端末
-flutter run -d chrome            # ブラウザ
-flutter run -d windows           # パソコン
+| | 必要なもの |
+|---|---|
+| 共通 | [Flutter SDK](https://docs.flutter.dev/get-started/install)（stable / 開発時は 3.44.8） |
+| Android | Android Studio または Android SDK（`flutter doctor` が案内します） |
+| Windows | Visual Studio Build Tools（下記） |
+| Web | Chrome |
+
+```bash
+flutter doctor      # 足りないものを教えてくれる
+flutter pub get     # パッケージの取得
 ```
 
-### 配布用のビルド
-
-```bash
-flutter build apk --release              # Android
-flutter build web --release              # Web
-flutter build windows --release          # Windows
-```
-
-Web 版は `main` に push すると GitHub Actions が自動でビルドして
-GitHub Pages へ配信します（`.github/workflows/pages.yml`）。
-
-Windows のビルドには Visual Studio の C++ ツールが必要です。
+Windows 版をビルドするなら、C++ ツールを入れます（**ATL を忘れずに**）。
 
 ```powershell
 winget install --id Microsoft.VisualStudio.2022.BuildTools --override `
   "--quiet --wait --norestart --add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.VC.ATL --includeRecommended"
 ```
 
-`Microsoft.VisualStudio.Component.VC.ATL` を忘れると、通知プラグインのビルドで
-`atlbase.h が見つからない` と止まります。
+`Microsoft.VisualStudio.Component.VC.ATL` が無いと、通知プラグインのビルドが
+`atlbase.h が見つからない`（error C1083）で止まります。
 
-出来上がるのは単体の exe ではなく `build/windows/x64/runner/Release/` のフォルダ一式
-（exe + DLL + data）です。配布するときはフォルダごと固めます。
+### 開発中に動かす
+
+```bash
+flutter run                 # つないでいる Android 端末
+flutter run -d chrome       # ブラウザ
+flutter run -d windows      # パソコン
+flutter devices             # 何が使えるか一覧
+```
+
+### 直す前と後にやること
+
+```bash
+flutter analyze && flutter test
+```
+
+CI でも同じものが走ります。落ちたまま push すると GitHub 上で赤くなります。
+
+---
+
+## 配る
+
+### Android
+
+```bash
+flutter build apk --release --build-number 2019
+#  → build/app/outputs/flutter-apk/app-release.apk
+```
+
+**`--build-number` は毎回1つ上げます。** Android は versionCode が
+今入っているものより小さいと上書きを拒否し、`INSTALL_FAILED_VERSION_DOWNGRADE`
+になります。今どれが入っているかは次で分かります。
+
+```bash
+adb -s <端末ID> shell "dumpsys package com.yjfuj.disaster_map | grep -m1 versionCode"
+```
+
+端末に入れる:
+
+```bash
+adb devices                                   # 端末IDを確認
+adb -s <端末ID> install -r <APKのパス>         # -r は上書き更新
+```
+
+> `-s <端末ID>` は必ず付けてください。省くと**接続順で選ばれた端末**に入り、
+> エミュレータのつもりで実機を上書きすることがあります。
+
+ケーブルを抜いて Wi-Fi で入れたいときは、一度だけ USB でつないで切り替えます。
+
+```bash
+adb -s <端末ID> tcpip 5555
+adb -s <端末ID> shell "ip -f inet addr show wlan0 | grep -oE 'inet [0-9.]+'"
+adb connect <出てきたIP>:5555                 # 以降はケーブル不要
+```
+
+release ビルドは debug キーで署名しています（[引き継ぐ人へ](#引き継ぐ人へ) 参照）。
+
+### Windows
+
+```bash
+flutter build windows --release
+#  → build/windows/x64/runner/Release/  （exe + DLL + data、約37MB）
+```
+
+**単体の exe にはなりません。** `disaster_map.exe` は 91KB しかなく、
+同じフォルダの DLL と `data/` が揃っていないと動きません。配るときは
+**フォルダごと** ZIP に固めます。
+
+```powershell
+Compress-Archive -Path "build/windows/x64/runner/Release/*" -DestinationPath disaster-map-windows.zip
+```
+
+未署名なので、受け取った側では SmartScreen の警告
+（「WindowsによってPCが保護されました」）が出ます。
+消すにはコード署名証明書が要ります。
+
+### Web
+
+`main` に push するだけです。GitHub Actions がビルドして GitHub Pages へ配信します
+（`.github/workflows/pages.yml`）。
+
+```bash
+git push        # → https://dirzan123-max.github.io/disaster-map/
+```
+
+手元で確認したいときは:
+
+```bash
+flutter build web --release
+cd build/web && python -m http.server 8000
+```
+
+> `flutter build web` の出力は `--base-href` の指定に依存します。
+> ローカル確認では既定（`/`）、Pages ではリポジトリ名のサブパスになるため、
+> CI 側で `--base-href "/disaster-map/"` を渡しています。
 
 ---
 
