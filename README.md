@@ -26,6 +26,7 @@ Flutter の1コードベースから **Android・Windows・Web** の3つを出�
 - [テスト](#テスト)
 - [同梱データの作り直し](#同梱データの作り直し)
 - [踏んだ地雷](#踏んだ地雷)
+- [引き継ぐ人へ](#引き継ぐ人へ)
 
 ---
 
@@ -348,6 +349,57 @@ bash tool/refresh_fixtures.sh    # テスト用フィクスチャの取り直し
 | 台湾が中国と同じ扱いになる | Natural Earth の ISO_A2 が `CN-TW` |
 | CORS 非対応だと誤判定 | `Origin` ヘッダを付けずに応答ヘッダを見ていた |
 | テストが無限に止まる | 画面のない場所からネイティブのサービスを呼んでいた |
+
+---
+
+## 引き継ぐ人へ
+
+`git clone` して `flutter pub get` → `flutter run` で動きます。
+同梱データ（フォント・国境・気象庁の代表点）も `pubspec.lock` もコミット済みなので、
+`tool/*.py` を走らせ直す必要はありません。
+
+詰まりやすいのは次の4点です。
+
+### 1. Windows ビルドには ATL が要る
+
+`Microsoft.VisualStudio.Component.VC.ATL` を入れていないと、
+通知プラグインのビルドが `atlbase.h が見つからない` で止まります
+（[インストール手順](#動かす)）。
+
+### 2. Android の署名は debug キーのまま
+
+```kotlin
+// android/app/build.gradle.kts
+signingConfig = signingConfigs.getByName("debug")
+```
+
+debug キーは**開発機ごとに違う**ため、別の人がビルドした APK は署名が変わります。
+すでに入っている端末には上書き更新できず、一度アンインストールが必要です。
+
+Google Play へ出すときは専用のキーストアに差し替えてください。
+**キーストアを失うと同じアプリとして更新できなくなります。**
+
+### 3. 定期監視の Webhook はリポジトリの secret
+
+`.github/workflows/watch.yml` は `secrets.WEBHOOK_URL` を使います。
+fork / clone した場合は自分で設定してください（無くても他はすべて動きます）。
+
+### 4. Flutter のバージョンは固定していない
+
+CI は `channel: stable` を使っています。パッケージは `pubspec.lock` で固定されますが、
+Flutter 本体は将来の stable に追随します。壊れたら
+`subosito/flutter-action` の `flutter-version` を指定して固定してください
+（開発時の確認は Flutter 3.44.8 / Dart SDK ^3.12.2）。
+
+### 変更したら
+
+```bash
+flutter analyze && flutter test    # push 前に。CI でも同じものが走る
+```
+
+実装を変えたときは [`docs/architecture.md`](docs/architecture.md) の
+該当箇所も同じ作業の中で直してください。
+「なぜそうしたか」が残っていないと、同じ地雷を踏み直すことになります。
 
 ---
 
